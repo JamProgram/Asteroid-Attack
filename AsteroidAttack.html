@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+<title>Asteroid Attack!</title>
+
+
+
+
+<script type="application/javascript">
+
+//Art and Game made by Jahmaria stevens
+
+var INTERVAL = 20;
+var DEBUG = false; //true;
+var canvas;             // The canvas shown on the page.
+var ctx;                // The context, used to access the canvas.
+var SpriteRow = 0;      // Row of the graphic to show
+var SpriteCol = 0;      // Col of the graphic to show
+var MaxSpriteRow = 8;   // How many rows of images
+var MaxSpriteCol = 8;  // How many columns of images
+var MaxBoulderCol = 8;  // How many columns of images for the boulder
+var tileWidth = 32;    // Size of each tile (32x32)
+var tileHeight = 32;
+var goal_found = false;
+var GOALTILE = 5;      // Which tile is the goal
+var upSequence = 0;        // Is the player moving up? >0 means yes
+var downSequence = 0;      // Is the player moving down? >0 means yes
+var leftSequence = 0;      // Is the player moving left? >0 means yes
+var rightSequence = 0;     // Is the player moving right? >0 means yes
+var SpriteWidth = 32;   // Width, Height of each subimage
+var SpriteHeight = 32;
+var HalfSpriteWidth = 16;   // Half Width, Height of each subimage
+var HalfSpriteHeight = 16;
+var WIDTH = 640;    // of the canvas
+var HEIGHT = 480;    // of the canvas
+var MAXROW = 15;
+var MAXCOL = 20;
+var moved = false; // Did the user move the square?
+var myX = 100;  // Where the player's sprite should go on the canvas
+var myY = 300;  // Where the player's sprite should go on the canvas
+var moveAmount = 4;  // How many pixels to move per update.
+var squareWidth = 32;   // Width, Height of the square
+var squareHeight = 32;
+var boulderX = 0;
+var boulderY = 0;
+var boulderDX = 0; //-20;
+var boulderDY = 5;
+var boulderCol = 0;
+var boulderRow = 0;
+var boulderActive = false;
+var boulders = []
+var projectiles = []
+var projectile = {
+  width: 5,   // Set the width of the projectile
+  height: 10, // Set the height of the projectile
+  speed: 5    // Set the speed of the projectile
+};
+var tickCount = 20;         // When this counts down to 0, spawn a new boulder
+var stars_offset = 0;     // We move the stars, slowly (floating pt)
+var goal_offset = 0;         // Where the goal is (a flag)
+var STARSMAX;             // Maximum value to start stars (on left)
+var starsSpeed = 0.25;    // How much stars move in relation to sprite
+var stars_loaded = false;
+var sprite_loaded = false;
+var trees_loaded  = true;      // no trees, yet
+var mountains_loaded  = true;  // unused
+var tiles_loaded  = true;      // unused
+var boulder_loaded = false;
+var pageLoadComplete = false;
+var gameOver = false;
+var gamePaused = false;
+
+var stars   = new Image();    // distant stars
+stars.src   = "starbackground.png";
+
+var SpriteImage = new Image();   // Sprite sheet
+SpriteImage.src   = "spaceship1.png";
+var boulderImage = new Image();   // Sprite sheet
+boulderImage.src   = "rolling.png";
+
+SpriteImage.onload = function() {
+  sprite_loaded = true;
+}
+stars.onload = function() {
+  STARSMAX = stars.height - HEIGHT;
+  stars_offset = STARSMAX;
+  stars_loaded = true;
+}
+boulderImage.onload = function() {
+  boulder_loaded = true;
+}
+
+var myInterval;
+var myarray = [
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+function black() {
+  document.bgColor = "#000000";
+  Fill = "#000000";
+}
+
+function green() {
+  document.bgColor = "#0f6000";
+  Fill = "#0f6000";
+}
+
+function red() {
+  document.bgColor = "#f04040";
+  Fill = "#f04040";
+}
+
+function eraseSprite(X, Y) {
+  // erase sprite
+  ctx.clearRect(X, Y, 32, 32);
+}
+
+// Erase the entire canvas except projectiles.
+function eraseEverything() {
+  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+  // Draw stars background
+  ctx.drawImage(stars, 0, Math.floor(stars_offset),
+    WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT);
+
+  // Draw boulders
+  for (var i = 0; i < boulders.length; i++) {
+    var boulder = boulders[i];
+    if (boulder.active) {
+      drawSprite(boulderImage, boulder.x, boulder.y, boulderCol, boulderRow, MaxBoulderCol);
+    }
+  }
+}
+
+
+function drawEverything() {
+  ctx.drawImage(stars, 0, Math.floor(stars_offset), WIDTH, HEIGHT, 0, 0, WIDTH, HEIGHT);
+
+  SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+
+  for (var i = 0; i < boulders.length; i++) {
+    var boulder = boulders[i];
+
+    if (boulder.active) {
+      boulderCol = drawSprite(boulderImage, boulder.x, boulder.y, boulderCol, boulderRow, MaxBoulderCol);
+    }
+  }
+
+  for (var i = 0; i < projectiles.length; i++) {
+    var currentProjectile = projectiles[i];
+
+    if (currentProjectile.active) {
+      ctx.fillStyle = "#0000FF"; //makes bullet blue
+      ctx.fillRect(
+        currentProjectile.x,
+        currentProjectile.y,
+        currentProjectile.width,
+        currentProjectile.height
+      );
+    }
+  }
+}
+
+
+function drawSprite(myImage, myX, myY, myCol, myRow, myMaxSpriteCol) {
+  ctx.drawImage(myImage,
+     myCol*32, myRow*32, 32, 32,
+     myX, myY, 32, 32);
+  myCol++;
+  if (myCol >= myMaxSpriteCol)
+    myCol = 0;
+  return myCol;
+}
+
+function showPausedText() {
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(100, 100, WIDTH - 200, HEIGHT - 200);
+  ctx.fillStyle = "blue";
+  ctx.font = "bold 16px Arial";
+  ctx.fillText('Paused', 200, 240);
+  ctx.fillText('Press any key to continue', 200, 280);
+}
+
+function Tick() {
+  if (gamePaused) {
+    showPausedText();
+    return; // Pause the game
+  }
+
+  if (gameOver) {
+    console.log("Game Over");
+    clearInterval(myInterval); // Stop the game loop
+    return;
+  }
+
+  eraseEverything();
+
+  if (moved) {
+    moved = false;
+  }
+
+  tickCount--;
+
+  if (tickCount <= 0) {
+    tickCount = 100;
+    for (var i = 0; i < 10; i++) {
+      var newBoulder = {
+        x: Math.floor(Math.random() * (WIDTH - squareWidth)),
+        y: 0,
+        active: true
+      };
+
+      boulders.push(newBoulder);
+    }
+  }
+
+  // Update each boulder
+  for (var i = 0; i < boulders.length; i++) {
+    var boulder = boulders[i];
+
+    if (boulder.active) {
+      boulder.y += boulderDY;
+      checkCollisionSprites(boulder);
+
+      // Check for collision with projectiles
+      for (var j = 0; j < projectiles.length; j++) {
+        var currentProjectile = projectiles[j];
+
+        if (
+          currentProjectile.active &&
+          currentProjectile.x < boulder.x + squareWidth &&
+          currentProjectile.x + currentProjectile.width > boulder.x &&
+          currentProjectile.y < boulder.y + squareHeight &&
+          currentProjectile.y + currentProjectile.height > boulder.y
+        ) {
+          // Collision with boulder, destroy it
+          boulder.active = false;
+          currentProjectile.active = false;
+        }
+      }
+    }
+  }
+
+  // Update each projectile
+  for (var i = 0; i < projectiles.length; i++) {
+    var currentProjectile = projectiles[i];
+
+    if (currentProjectile.active) {
+      currentProjectile.y -= currentProjectile.speed;
+
+      // Check if projectile is out of bounds
+      if (currentProjectile.y < 0) {
+        currentProjectile.active = false;
+      }
+    }
+  }
+
+  stars_offset = stars_offset - 1;
+
+  if (stars_offset < 0) {
+    stars_offset = 0;
+  }
+
+  if (leftSequence > 0) {
+    leftSequence++;
+    if (leftSequence > leftSeqMax) leftSequence = 0;
+  } else if (rightSequence > 0) {
+   rightSequence++;
+    if (rightSequence > rightSeqMax) rightSequence = 0;
+  }
+
+  if (upSequence + downSequence + leftSequence + rightSequence > 0) {
+    SpriteCol++;
+    if (SpriteCol >= MaxSpriteCol) SpriteCol = 0;
+  }
+
+  drawEverything();
+
+  if (stars_offset <= goal_offset) {
+    console.log("You win!");
+    document.getElementById("youwin").innerHTML = "You win!";
+    green();
+    clearInterval(myInterval);
+  }
+}
+
+
+function loadComplete() {
+  console.log("Load is complete.");
+  canvas = document.getElementById("theCanvas");
+  ctx = canvas.getContext("2d");
+
+  SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+
+  pageLoadComplete = true;
+  myInterval = self.setInterval(function(){check4all_loaded()}, 500);
+}
+
+function checkCollisionSprites(boulder) {
+  var diffX = Math.abs(myX - boulder.x);
+  var diffY = Math.abs(myY - boulder.y);
+
+  if ((diffX < HalfSpriteWidth) && (diffY < HalfSpriteHeight)) {
+    console.log('Collision with player at ' + myX + ', ' + myY
+      + ' and boulder at ' + boulder.x + ', ' + boulder.y);
+    red();
+    document.getElementById("youwin").innerHTML = "You Lose!";
+    gameOver = true;
+    boulder.active = false; // Deactivate the collided boulder
+  }
+}
+
+function checkCollision(newX, newY) {
+  var tempRow = Math.floor(newY / tileWidth);
+  var tempCol = Math.floor(newX / tileHeight);
+
+  if (myarray[tempRow * MAXCOL + tempCol] == 0)
+    return true;
+
+  if (!goal_found && (myarray[tempRow * MAXCOL + tempCol] == GOALTILE)) {
+    green();
+    goal_found = true;
+  }
+
+  return false;
+}
+
+function check4all_loaded() {
+  var checkStr = 'check4all timer: ';
+  if (sprite_loaded)
+    checkStr += '  + sprite';
+  else
+    checkStr += '  - sprite';
+  if (boulder_loaded)
+    checkStr += '  + asteroid';
+  else
+    checkStr += '  - asteroid';
+  if (stars_loaded)
+    checkStr += '  + stars';
+  else
+    checkStr += '  - stars';
+  if (trees_loaded)
+    checkStr += '  + trees';
+  else
+    checkStr += '  - trees';
+  if (mountains_loaded)
+    checkStr += '  + mountains';
+  else
+    checkStr += '  - mountains';
+  if (tiles_loaded)
+    checkStr += '  + tiles';
+  else
+    checkStr += '  - tiles';
+  if (pageLoadComplete)
+    checkStr += '  + pageLoadComplete';
+  else
+    checkStr += '  - pageLoadComplete';
+  console.log(checkStr);
+  if ( sprite_loaded  && stars_loaded && trees_loaded  && mountains_loaded &&
+         tiles_loaded && boulder_loaded && pageLoadComplete ) {
+    clearInterval(myInterval);
+    black(); // background color
+    eraseEverything();
+    drawEverything();
+console.log('Start a game interval');
+    myInterval = self.setInterval(function(){Tick()}, INTERVAL);
+  }
+}
+
+function whenKeyPressed(key) {
+  var newX = myX;
+  var newY = myY;
+
+  switch (key) {
+    case 28:  // Right arrow was pressed
+      SpriteRow = 1;
+      newX = newX + moveAmount;
+      if (newX + squareWidth > WIDTH)
+        newX = WIDTH - squareWidth;
+      moved = true;
+      break;
+    case 29:  // Left arrow, ASCII 29
+      SpriteRow = 0;
+      newX = newX - moveAmount;
+      if (newX < 0)
+        newX = 0;
+      moved = true;
+      break;
+    case 30:  // Up arrow was pressed
+      SpriteRow = 2;
+      newY = newY - moveAmount;
+      if (newY < 0)
+        newY = 0;
+      moved = true;
+      break;
+    case 31:  // Down arrow was pressed
+      SpriteRow = 3;
+      newY = newY + moveAmount;
+      if (newY + squareHeight > HEIGHT)
+        newY = HEIGHT - squareWidth;
+      moved = true;
+      break;
+      case 32:  // ASCII code for spacebar
+        var newProjectile = {
+          x: myX + (squareWidth - projectile.width) / 2,
+          y: myY,
+          width: projectile.width,
+          height: projectile.height,
+          speed: projectile.speed,
+          active: true
+        };
+        projectiles.push(newProjectile);
+        break;
+  }
+
+  if ((checkCollision(newX, newY)) &&
+      (checkCollision(newX + SpriteWidth, newY)) &&
+      (checkCollision(newX, newY + SpriteHeight)) &&
+      (checkCollision(newX + SpriteWidth, newY + SpriteHeight))) {
+    myX = newX;
+    myY = newY;
+  } else {
+    console.log("could not move there");
+  }
+  SpriteCol = drawSprite(SpriteImage, myX, myY, SpriteCol, SpriteRow, MaxSpriteCol);
+}
+
+
+</script>
+
+</head>
+<body onload="loadComplete()" bgcolor="#0f0000" text="#ffffff">
+
+<center>
+<script type="application/javascript">
+  document.write('<center>');
+  document.write('<canvas id="theCanvas" tabindex="1" width="' + WIDTH
+    + '" height="' + HEIGHT + '"></canvas>');
+  document.write('<h2 style="font-size:10vw" id="youwin"></h2>');
+  document.write('</center>');
+</script>
+<h2>Press arrowkeys to move, SPACEBAR to shoot at boulders, P to PAUSE</h2>
+<h2>Try To Survive!!!</h2>
+
+</center>
+
+<script type="application/javascript">
+  document['onkeydown'] = function(event) {
+    event = event || window.event;
+    var key = event.which || event.cursor;
+  if (gamePaused) {
+    // If the game is paused, any key press should unpause it
+    gamePaused = false; // Unpause the game
+  } else {
+    switch (key) {
+      case 37:  // Left arrow, ASCII 29
+        key = 29;
+        break;
+      case 38:  // Up arrow, ASCII 30
+        key = 30;
+        break;
+      case 39:  // Right arrow, ASCII 28
+        key = 28;
+        break;
+      case 40:  // Down arrow, ASCII 31
+        key = 31;
+        break;
+      case 80:  // "P" key to pause/unpause
+        gamePaused = true; // Pause the game
+        break;
+    }
+    whenKeyPressed(key);
+    }
+  };
+</script>
+
+</body></html>
+
